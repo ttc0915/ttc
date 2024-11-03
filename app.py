@@ -31,10 +31,23 @@ device = {
         "dpi": "320",
         "update_version_code": "2023204020",
         "app_type": "normal",
+        "sys_region": "SG",
+        "mcc_mnc": "5255",
+        "timezone_name": "Asia/Singapore",
+        "timezone_offset": "28800",
+        "build_number": "32.4.2",
         "region": "SG",
+        "carrier_region": "SG",
+        "uoo": "0",
         "app_language": "en",
         "locale": "en",
+        "op_region": "SG",
+        "ac2": "wifi",
+        "host_abi": "armeabi-v7a",
         "cdid": "841d4caf-1b90-450f-b717-b897ff555177",
+        "support_webview": "1",
+        "okhttp_version": "4.2.137.31-tiktok",
+        "use_store_region_cookie": "1",
         "user-agent": "com.zhiliaoapp.musically/2023204020 (Linux; U; Android 8.0.0; en_SG; SHARP_D9XLH; Build/N2G48H;tt-ok/3.12.13.4-tiktok)"
     }
 }
@@ -57,17 +70,48 @@ def getdomain(email, session, device):
         params = {
             'iid': device['payload']['iid'],
             'device_id': device['payload']['device_id'],
+            'ac': 'wifi',
+            'channel': 'googleplay',
             'aid': '567753',
             'app_name': 'tiktok_studio',
+            'version_code': '320906',
+            'version_name': '32.9.6',
             'device_platform': 'android',
+            'os': 'android',
+            'ab_version': '32.9.6',
+            'ssmix': 'a',
             'device_type': device['payload']['device_type'],
             'device_brand': device['payload']['device_brand'],
-            'os': 'android',
+            'language': 'en',
+            'os_api': '28',
+            'os_version': '9',
+            'openudid': device['payload']['openudid'],
+            'manifest_version_code': '320906',
+            'resolution': '540*960',
+            'dpi': '240',
+            'update_version_code': '320906',
+            '_rticket': str(int(time.time())),
+            'is_pad': '0',
+            'current_region': device['payload']['carrier_region'],
+            'app_type': 'normal',
+            'sys_region': 'US',
+            'mcc_mnc': '45201',
+            'timezone_name': device['payload']['timezone_name'],
+            'carrier_region_v2': '452',
+            'residence': device['payload']['carrier_region'],
             'app_language': 'en',
-            'region': device['payload']['region'],
-            'cdid': device['payload']['cdid'],
-            '_rticket': str(int(time.time() * 1000)),
-            'ts': str(int(time.time()))
+            'carrier_region': device['payload']['carrier_region'],
+            'ac2': 'wifi5g',
+            'uoo': '0',
+            'op_region': device['payload']['carrier_region'],
+            'timezone_offset': device['payload']['timezone_offset'],
+            'build_number': '32.9.6',
+            'host_abi': 'arm64-v8a',
+            'locale': 'en',
+            'region': device['payload']['carrier_region'],
+            'content_language': 'en',
+            'ts': str(int(time.time())),
+            'cdid': device['payload']['cdid']
         }
         url_encoded_str = urllib.parse.urlencode(params, doseq=True).replace('%2A', '*')
         url = f"https://api16-normal-useast5.tiktokv.us/passport/app/region/?{url_encoded_str}"
@@ -78,26 +122,16 @@ def getdomain(email, session, device):
             'Connection': 'Keep-Alive',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'passport-sdk-version': '6010090',
-            'User-Agent': device['payload']['user-agent'],
+            'User-Agent': 'com.ss.android.tt.creator/320906 (Linux; U; Android 9; en_US; SM-G960N; Build/PQ3A.190605.07291528;tt-ok/3.12.13.4-tiktok)',
             'x-vc-bdturing-sdk-version': '2.3.4.i18n',
         }
 
         response = session.post(url, headers=headers, data=payload)
         response_data = response.json()
-
-        # 调试输出
-        print(f"Debug - Response for {email}: {response_data}")
-
-        if response.status_code == 200:
-            return {
-                "data": response_data.get('data', {}),
-                "message": "success"
-            }
-        else:
-            return {
-                "message": f"error: status {response.status_code}, response {response_data}"
-            }
-
+        return {
+            "data": response_data.get('data', {}),
+            "message": "success"
+        }
     except Exception as e:
         return {
             "message": f"error: {str(e)}"
@@ -119,12 +153,12 @@ if st.button("Start Check"):
         if not phone:
             continue
         result = getdomain(phone, session, device)
-        time.sleep(0.5)  # 增加请求间隔
         
-        if result["message"] == "success":
-            country_code = result["data"].get('country_code', 'unknown')
-            register_status = "True" if country_code != 'sg' else "False"
-            results.append(f"Phone number {phone}, register: {register_status}")
+        # 依据结果确定是否注册
+        if result["message"] == "success" and result["data"].get('country_code') != 'sg':
+            results.append(f"Phone number {phone}, register: True")
+        elif result["message"] == "success":
+            results.append(f"Phone number {phone}, register: False")
         else:
             results.append(f"Error for {phone}: {result['message']}")
 
