@@ -32,11 +32,9 @@ device = {
         "update_version_code": "2023204020",
         "app_type": "normal",
         "region": "SG",
-        "carrier_region": "SG",
         "app_language": "en",
         "locale": "en",
         "cdid": "841d4caf-1b90-450f-b717-b897ff555177",
-        # 手动添加 user-agent 字段
         "user-agent": "com.zhiliaoapp.musically/2023204020 (Linux; U; Android 8.0.0; en_SG; SHARP_D9XLH; Build/N2G48H;tt-ok/3.12.13.4-tiktok)"
     }
 }
@@ -80,14 +78,16 @@ def getdomain(email, session, device):
             'Connection': 'Keep-Alive',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'passport-sdk-version': '6010090',
-            # 使用我们添加的 user-agent
             'User-Agent': device['payload']['user-agent'],
             'x-vc-bdturing-sdk-version': '2.3.4.i18n',
         }
 
         response = session.post(url, headers=headers, data=payload)
         response_data = response.json()
-        
+
+        # 调试输出
+        print(f"Debug - Response for {email}: {response_data}")
+
         if response.status_code == 200:
             return {
                 "data": response_data.get('data', {}),
@@ -119,6 +119,7 @@ if st.button("Start Check"):
         if not phone:
             continue
         result = getdomain(phone, session, device)
+        time.sleep(0.5)  # 增加请求间隔
         
         if result["message"] == "success":
             country_code = result["data"].get('country_code', 'unknown')
