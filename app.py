@@ -220,4 +220,17 @@ if st.button("检查邮箱"):
         email = email.strip()
         if not email:
             continue
-        result = get_email
+        result = get_email_registration_status(email, session, device)
+        
+        if result["message"] == "success":
+            if result["is_registered"]:
+                email_results.append(f"邮箱 {email}, 注册: 是")
+            else:
+                email_results.append(f"邮箱 {email}, 注册: 否")
+        else:
+            email_results.append(f"邮箱 {email} 的错误: {result['message']}")
+
+    # 显示邮箱结果
+    st.write("### 邮箱检查结果:")
+    for line in email_results:
+        st.write(line)
