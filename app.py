@@ -6,18 +6,19 @@ import time
 # 发送验证码到手机号
 def send_verification_code(phone, device):
     try:
-        # 假设此URL为发送验证码的API
-        url = f"https://api.tiktok.com/send_code?phone={phone}"
+        # 更新为正确的API地址
+        url = "https://api.tiktok.com/v1/send_code"  # 假设这是正确的API地址
         headers = {
             "Content-Type": "application/json",
             "User-Agent": device["payload"]["user-agent"],
-            # 其他必要的headers信息
+            # 如果需要其他授权信息，确保在此添加
         }
-        response = requests.post(url, headers=headers)
-        
-        # 打印API返回的原始数据
-        st.write("API返回内容:", response.text)  # 添加这一行来查看返回的内容
-        
+        payload = {
+            "phone": phone  # 根据API要求的字段名称传递手机号
+        }
+        response = requests.post(url, headers=headers, json=payload)  # 使用json=payload
+        st.write("API返回内容:", response.text)  # 打印返回内容
+
         data = response.json()  # 尝试解析JSON
         if data.get("status") == "success":
             return {"message": "验证码已发送"}
@@ -27,8 +28,7 @@ def send_verification_code(phone, device):
         return {"message": "错误：无法解析API响应。返回内容不是JSON格式"}
     except Exception as e:
         return {"message": f"error: {str(e)}"}
-
-
+        
 # 从接码API获取验证码
 def get_verification_code(api_link):
     try:
