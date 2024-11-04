@@ -92,26 +92,32 @@ def get_email_registration_status(email, session, device):
         }
 
         response = session.post(url, headers=headers, data=payload)
+
+        # 打印原始响应内容和状态码
+        print(f"Response Code: {response.status_code}")
+        print(f"Response Text: {response.text}")
         
-        print(response.text)  # 打印原始响应内容
         if response.status_code != 200:
-            return {"message": "error", "details": f"HTTP Error {response.status_code}"}
+            return {"message": "error", "details": f"HTTP Error {response.status_code}: {response.text}"}
 
         response_data = response.json()
 
-        if response_data.get('status_code') == 200:  # 假设200表示成功
-            if response_data.get('is_registered'):
-                return {"message": "success", "is_registered": True}
+        if 'status_code' in response_data:
+            if response_data['status_code'] == 200:  # 假设200表示成功
+                if response_data.get('is_registered'):
+                    return {"message": "success", "is_registered": True}
+                else:
+                    return {"message": "success", "is_registered": False}
             else:
-                return {"message": "success", "is_registered": False}
+                return {"message": "error", "details": f"API Error {response_data['status_code']}: {response_data.get('message')}"}
         else:
-            return {"message": "error", "details": response_data.get('message')}
+            return {"message": "error", "details": "Unexpected response structure."}
 
     except Exception as e:
         return {
             "message": f"error: {str(e)}"
         }
-        
+
 # 获取手机号的域名信息的函数
 def getdomain(phone, session, device):
     try:
@@ -174,6 +180,11 @@ def getdomain(phone, session, device):
         }
 
         response = session.post(url, headers=headers, data=payload)
+
+        # 打印原始响应内容和状态码
+        print(f"Response Code: {response.status_code}")
+        print(f"Response Text: {response.text}")
+
         response_data = response.json()
         return {
             "data": response_data.get('data', {}),
