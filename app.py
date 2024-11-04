@@ -6,7 +6,7 @@ import urllib
 import logging
 
 # 设置日志配置
-logging.basicConfig(filename='error_log.txt', level=logging.ERROR,
+logging.basicConfig(filename='error_log.txt', level=logging.INFO,
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
 # 定义全局设备信息
@@ -96,11 +96,11 @@ def get_email_registration_status(email, session, device):
             'User-Agent': 'com.zhiliaoapp.musically',
         }
 
+        logging.info(f"Sending request to URL: {url}")
+        logging.info(f"Payload: {payload}")
         response = session.post(url, headers=headers, data=payload)
 
         # 打印原始响应内容和状态码
-        logging.info(f"Request URL: {url}")
-        logging.info(f"Request Payload: {payload}")
         logging.info(f"Response Code: {response.status_code}")
         logging.info(f"Response Text: {response.text}")
 
@@ -113,17 +113,15 @@ def get_email_registration_status(email, session, device):
         try:
             response_data = response.json()
         except ValueError as e:
-            error_message = f"Error parsing JSON: {str(e)}"
+            error_message = f"Error parsing JSON response: {str(e)}"
             logging.error(error_message)
             return {"message": "error", "details": error_message}
 
         # 检查返回数据的结构
         if 'status_code' in response_data:
             if response_data['status_code'] == 200:  # 假设200表示成功
-                if response_data.get('is_registered'):
-                    return {"message": "success", "is_registered": True}
-                else:
-                    return {"message": "success", "is_registered": False}
+                is_registered = response_data.get('is_registered', False)
+                return {"message": "success", "is_registered": is_registered}
             else:
                 error_message = f"API Error {response_data['status_code']}: {response_data.get('message')}"
                 logging.error(error_message)
@@ -139,113 +137,9 @@ def get_email_registration_status(email, session, device):
             "message": f"error: {str(e)}"
         }
 
-# 获取手机号的域名信息的函数
-def getdomain(phone, session, device):
-    try:
-        params = {
-            'iid': device['payload']['iid'],
-            'device_id': device['payload']['device_id'],
-            'ac': 'wifi',
-            'channel': 'googleplay',
-            'aid': '567753',
-            'app_name': 'tiktok_studio',
-            'version_code': '320906',
-            'device_platform': 'android',
-            'os': 'android',
-            'ab_version': '32.9.6',
-            'ssmix': 'a',
-            'device_type': device['payload']['device_type'],
-            'device_brand': device['payload']['device_brand'],
-            'language': 'en',
-            'os_api': '28',
-            'os_version': '9',
-            'openudid': device['payload']['openudid'],
-            'manifest_version_code': '320906',
-            'resolution': '540*960',
-            'dpi': '240',
-            'update_version_code': '320906',
-            '_rticket': str(int(time.time())),
-            'is_pad': '0',
-            'current_region': device['payload']['carrier_region'],
-            'app_type': 'normal',
-            'sys_region': 'US',
-            'mcc_mnc': '45201',
-            'timezone_name': device['payload']['timezone_name'],
-            'carrier_region_v2': '452',
-            'residence': device['payload']['carrier_region'],
-            'app_language': 'en',
-            'carrier_region': device['payload']['carrier_region'],
-            'ac2': 'wifi5g',
-            'uoo': '0',
-            'op_region': device['payload']['carrier_region'],
-            'timezone_offset': device['payload']['timezone_offset'],
-            'build_number': '32.9.6',
-            'host_abi': 'arm64-v8a',
-            'locale': 'en',
-            'region': device['payload']['carrier_region'],
-            'content_language': 'en',
-            'ts': str(int(time.time())),
-            'cdid': device['payload']['cdid']
-        }
-        url_encoded_str = urllib.parse.urlencode(params, doseq=True).replace('%2A', '*')
-        url = f"https://api16-normal-useast5.tiktokv.us/passport/app/region/?{url_encoded_str}"
-
-        payload = hashed_id(phone)
-        headers = {
-            'Accept-Encoding': 'gzip',
-            'Connection': 'Keep-Alive',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'passport-sdk-version': '6010090',
-            'User-Agent': 'com.ss.android.tt.creator/320906 (Linux; U; Android 9; en_US; SM-G960N; Build/PQ3A.190605.07291528;tt-ok/3.12.13.4-tiktok)',
-            'x-vc-bdturing-sdk-version': '2.3.4.i18n',
-        }
-
-        response = session.post(url, headers=headers, data=payload)
-
-        # 打印原始响应内容和状态码
-        logging.info(f"Response Code: {response.status_code}")
-        logging.info(f"Response Text: {response.text}")
-
-        response_data = response.json()
-        return {
-            "data": response_data.get('data', {}),
-            "message": "success"
-        }
-    except Exception as e:
-        logging.error(f"Exception occurred: {str(e)}")
-        return {
-            "message": f"error: {str(e)}"
-        }
-
 # Streamlit UI
 st.title("TikTok 注册检查工具")
 st.write("请输入每个手机号或邮箱，每行一个")
-
-# 手机号输入框
-phones = st.text_area("手机号 (每行一个)")
-
-# 检查手机号按钮
-if st.button("检查手机号"):
-    session = requests.Session()
-    phone_results = []
-    for phone in phones.strip().split("\n"):
-        phone = phone.strip()
-        if not phone:
-            continue
-        result = getdomain(phone, session, device)
-
-        # 依据结果确定是否注册
-        if result["message"] == "success" and result["data"].get('country_code') != 'sg':
-            phone_results.append(f"手机号 {phone}, 注册: 是")
-        elif result["message"] == "success":
-            phone_results.append(f"手机号 {phone}, 注册: 否")
-        else:
-            phone_results.append(f"手机号 {phone} 的错误: {result['message']}")
-
-    # 显示手机号结果
-    st.write("### 手机号检查结果:")
-    for line in phone_results:
-        st.write(line)
 
 # 邮箱输入框
 emails = st.text_area("邮箱地址 (每行一个)")
@@ -266,7 +160,7 @@ if st.button("检查邮箱"):
             else:
                 email_results.append(f"邮箱 {email}, 注册: 否")
         else:
-            email_results.append(f"邮箱 {email} 的错误: {result['message']}")
+            email_results.append(f"邮箱 {email} 的错误: {result['details']}")
 
     # 显示邮箱结果
     st.write("### 邮箱检查结果:")
