@@ -3,6 +3,7 @@ import requests
 import time
 import hashlib
 import urllib
+import json
 
 # 定义全局设备信息
 device = {
@@ -128,14 +129,7 @@ def getdomain(email, session, device):
 
         response = session.post(url, headers=headers, data=payload)
         response_data = response.json()
-        is_registered = response_data.get('data', {}).get('country_code') != 'sg'
-        is_banned = response_data.get('data', {}).get('is_banned', False)  # 假设返回的数据里有`is_banned`字段
-        is_disabled = response_data.get('data', {}).get('is_disabled', False)  # 假设返回的数据里有`is_disabled`字段
-        return {
-            "is_registered": is_registered,
-            "is_banned": is_banned or is_disabled,
-            "message": "success"
-        }
+        return response_data  # 返回完整的API响应数据
     except Exception as e:
         return {
             "message": f"error: {str(e)}"
@@ -180,21 +174,13 @@ if st.button("开始检测"):
             continue
         result = getdomain(phone, session, device)
         
-        # 依据结果确定注册及封禁状态
-        if result["message"] == "success":
-            if result["is_registered"] and result["is_banned"]:
-                results.append(f"手机号 {phone} 已注册 已封禁")
-            elif result["is_registered"]:
-                results.append(f"手机号 {phone} 已注册 未封禁")
-            else:
-                results.append(f"手机号 {phone} 未注册 未封禁")
-        else:
-            results.append(f"检测 {phone} 时出错: {result['message']}")
+        # 将返回的完整数据转换为JSON格式的字符串，并添加到结果列表
+        results.append(f"手机号 {phone} 返回结果:\n{json.dumps(result, indent=4, ensure_ascii=False)}")
 
-    # 显示结果
-    st.write("### 检测结果:")
+    # 显示返回的原始数据
+    st.write("### 原始返回结果:")
     for line in results:
-        st.write(line)
+        st.text(line)
 
     # 黑客特效
     st.markdown(
