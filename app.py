@@ -3,11 +3,6 @@ import requests
 import time
 import hashlib
 import urllib
-import logging
-
-# 设置日志配置
-logging.basicConfig(filename='error_log.txt', level=logging.INFO,
-                    format='%(asctime)s:%(levelname)s:%(message)s')
 
 # 定义全局设备信息
 device = {
@@ -69,100 +64,105 @@ def hashed_id(value):
     hashed_value = hashlib.sha256(hashed_id.encode()).hexdigest()
     return f"hashed_id={hashed_value}&type={type_value}"
 
-# 获取邮箱注册状态的函数
-def get_email_registration_status(email, session, device):
+# 获取域名信息的函数
+def getdomain(email, session, device):
     try:
         params = {
+            'iid': device['payload']['iid'],
             'device_id': device['payload']['device_id'],
             'ac': 'wifi',
             'channel': 'googleplay',
             'aid': '567753',
-            'app_name': 'tiktok',
+            'app_name': 'tiktok_studio',
             'version_code': '320906',
+            'version_name': '32.9.6',
             'device_platform': 'android',
             'os': 'android',
+            'ab_version': '32.9.6',
+            'ssmix': 'a',
+            'device_type': device['payload']['device_type'],
+            'device_brand': device['payload']['device_brand'],
+            'language': 'en',
+            'os_api': '28',
             'os_version': '9',
             'openudid': device['payload']['openudid'],
+            'manifest_version_code': '320906',
+            'resolution': '540*960',
+            'dpi': '240',
+            'update_version_code': '320906',
+            '_rticket': str(int(time.time())),
+            'is_pad': '0',
+            'current_region': device['payload']['carrier_region'],
+            'app_type': 'normal',
+            'sys_region': 'US',
+            'mcc_mnc': '45201',
             'timezone_name': device['payload']['timezone_name'],
+            'carrier_region_v2': '452',
+            'residence': device['payload']['carrier_region'],
+            'app_language': 'en',
+            'carrier_region': device['payload']['carrier_region'],
+            'ac2': 'wifi5g',
+            'uoo': '0',
+            'op_region': device['payload']['carrier_region'],
             'timezone_offset': device['payload']['timezone_offset'],
-            'cdid': device['payload']['cdid'],
+            'build_number': '32.9.6',
+            'host_abi': 'arm64-v8a',
+            'locale': 'en',
+            'region': device['payload']['carrier_region'],
+            'content_language': 'en',
+            'ts': str(int(time.time())),
+            'cdid': device['payload']['cdid']
         }
-        url_encoded_str = urllib.parse.urlencode(params)
-        url = f"https://api.tiktok.com/user/check_email/?{url_encoded_str}"
+        url_encoded_str = urllib.parse.urlencode(params, doseq=True).replace('%2A', '*')
+        url = f"https://api16-normal-useast5.tiktokv.us/passport/app/region/?{url_encoded_str}"
 
         payload = hashed_id(email)
         headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'com.zhiliaoapp.musically',
+            'Accept-Encoding': 'gzip',
+            'Connection': 'Keep-Alive',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'passport-sdk-version': '6010090',
+            'User-Agent': 'com.ss.android.tt.creator/320906 (Linux; U; Android 9; en_US; SM-G960N; Build/PQ3A.190605.07291528;tt-ok/3.12.13.4-tiktok)',
+            'x-vc-bdturing-sdk-version': '2.3.4.i18n',
         }
 
-        logging.info(f"Sending request to URL: {url}")
-        logging.info(f"Payload: {payload}")
         response = session.post(url, headers=headers, data=payload)
-
-        # 打印原始响应内容和状态码
-        logging.info(f"Response Code: {response.status_code}")
-        logging.info(f"Response Text: {response.text}")
-
-        # 检查响应状态码
-        if response.status_code != 200:
-            error_message = f"HTTP Error {response.status_code}: {response.text}"
-            logging.error(error_message)
-            return {"message": "error", "details": error_message}
-
-        try:
-            response_data = response.json()
-        except ValueError as e:
-            error_message = f"Error parsing JSON response: {str(e)}"
-            logging.error(error_message)
-            return {"message": "error", "details": error_message}
-
-        # 检查返回数据的结构
-        if 'status_code' in response_data:
-            if response_data['status_code'] == 200:  # 假设200表示成功
-                is_registered = response_data.get('is_registered', False)
-                return {"message": "success", "is_registered": is_registered}
-            else:
-                error_message = f"API Error {response_data['status_code']}: {response_data.get('message')}"
-                logging.error(error_message)
-                return {"message": "error", "details": error_message}
-        else:
-            error_message = "Unexpected response structure."
-            logging.error(error_message)
-            return {"message": "error", "details": error_message}
-
+        response_data = response.json()
+        return {
+            "data": response_data.get('data', {}),
+            "message": "success"
+        }
     except Exception as e:
-        logging.error(f"Exception occurred: {str(e)}")
         return {
             "message": f"error: {str(e)}"
         }
 
 # Streamlit UI
-st.title("TikTok 注册检查工具")
-st.write("请输入每个手机号或邮箱，每行一个")
+st.title("Phone Number Checker")
+st.write("请输入每个手机号， 每行一个")
 
-# 邮箱输入框
-emails = st.text_area("邮箱地址 (每行一个)")
+# 输入框
+phones = st.text_area("Phone Numbers (one per line)")
 
-# 检查邮箱按钮
-if st.button("检查邮箱"):
+# 按钮点击事件
+if st.button("Start Check"):
     session = requests.Session()
-    email_results = []
-    for email in emails.strip().split("\n"):
-        email = email.strip()
-        if not email:
+    results = []
+    for phone in phones.strip().split("\n"):
+        phone = phone.strip()
+        if not phone:
             continue
-        result = get_email_registration_status(email, session, device)
+        result = getdomain(phone, session, device)
         
-        if result["message"] == "success":
-            if result["is_registered"]:
-                email_results.append(f"邮箱 {email}, 注册: 是")
-            else:
-                email_results.append(f"邮箱 {email}, 注册: 否")
+        # 依据结果确定是否注册
+        if result["message"] == "success" and result["data"].get('country_code') != 'sg':
+            results.append(f"Phone number {phone}, register: True")
+        elif result["message"] == "success":
+            results.append(f"Phone number {phone}, register: False")
         else:
-            email_results.append(f"邮箱 {email} 的错误: {result['details']}")
+            results.append(f"Error for {phone}: {result['message']}")
 
-    # 显示邮箱结果
-    st.write("### 邮箱检查结果:")
-    for line in email_results:
+    # 显示结果
+    st.write("### Results:")
+    for line in results:
         st.write(line)
