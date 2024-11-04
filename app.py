@@ -130,9 +130,10 @@ def getdomain(email, session, device):
         response_data = response.json()
         is_registered = response_data.get('data', {}).get('country_code') != 'sg'
         is_banned = response_data.get('data', {}).get('is_banned', False)  # 假设返回的数据里有`is_banned`字段
+        is_disabled = response_data.get('data', {}).get('is_disabled', False)  # 假设返回的数据里有`is_disabled`字段
         return {
             "is_registered": is_registered,
-            "is_banned": is_banned,
+            "is_banned": is_banned or is_disabled,
             "message": "success"
         }
     except Exception as e:
@@ -182,7 +183,7 @@ if st.button("开始检测"):
         # 依据结果确定注册及封禁状态
         if result["message"] == "success":
             if result["is_registered"] and result["is_banned"]:
-                results.append(f"手机号 {phone} 已注册 封禁")
+                results.append(f"手机号 {phone} 已注册 已封禁")
             elif result["is_registered"]:
                 results.append(f"手机号 {phone} 已注册 未封禁")
             else:
