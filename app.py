@@ -3,8 +3,9 @@ import requests
 import time
 import hashlib
 import urllib
+import re  # 导入正则表达式库，用于手机号格式校验
 
-# Global device information
+# 定义设备信息
 device = {
     "payload": {
         "iid": "7432390588739929861",
@@ -28,14 +29,18 @@ device = {
     }
 }
 
-# Hash function to create a hashed ID
+# 定义哈希函数
 def hashed_id(value):
     type_value = "1" if "+" in value else "2" if "@" in value else "3"
     hashed_id = value + "aDy0TUhtql92P7hScCs97YWMT-jub2q9"
     hashed_value = hashlib.sha256(hashed_id.encode()).hexdigest()
     return f"hashed_id={hashed_value}&type={type_value}"
 
-# Function to check registration and ban status
+# 检查手机号格式
+def is_valid_phone_number(phone):
+    return bool(re.match(r"^\+?\d{8,15}$", phone))  # 检查是否为8到15位数字
+
+# 检查账号状态的函数
 def get_account_status(email, session, device):
     try:
         params = {
@@ -67,7 +72,10 @@ def get_account_status(email, session, device):
         response = session.post(url, headers=headers, data=payload)
         response_data = response.json()
         
-        # Check response fields for registration and ban status
+        # 详细记录返回的原始数据以便分析
+        st.write("Debug - 原始返回数据:", response_data)
+
+        # 检查注册和封禁状态
         is_registered = response_data.get('data', {}).get('country_code') != 'sg'
         is_banned = response_data.get('data', {}).get('is_banned', False)
         
@@ -81,7 +89,7 @@ def get_account_status(email, session, device):
             "message": f"error: {str(e)}"
         }
 
-# Streamlit UI configuration
+# Streamlit UI 配置
 st.set_page_config(page_title="Phone Number Checker", page_icon="📱")
 st.markdown(
     """
@@ -94,16 +102,16 @@ st.markdown(
 )
 
 st.title("Phone Number Checker")
-st.write("Please enter each phone number, one per line (请输入每个手机号，每行一个)")
+st.write("请在下方输入手机号，每行一个")
 
-# Input field
+# 输入框
 phones = st.text_area("Phone Numbers (one per line)")
 
-# Error log box
-error_logs = st.empty()  # To display logs in real-time
-error_log_messages = []  # Store error messages
+# 错误日志框
+error_logs = st.empty()  # 实时更新错误日志
+error_log_messages = []  # 存储错误信息
 
-# On button click, process phone numbers
+# 点击按钮进行检测
 if st.button("Start Check"):
     session = requests.Session()
     results = []
@@ -113,24 +121,28 @@ if st.button("Start Check"):
         if not phone:
             continue
         
+        # 检查手机号格式是否正确
+        if not is_valid_phone_number(phone):
+            error_log_messages.append(f"无效手机号格式: {phone}")
+            error_logs.write("\n".join(error_log_messages))
+            continue
+        
         result = get_account_status(phone, session, device)
         
-        # Check for success or error in response
         if result["message"] == "success":
             register_status = "True" if result["register"] else "False"
             ban_status = "True" if result["ban"] else "False"
             results.append(f"Phone number {phone}, register: {register_status}, Ban: {ban_status}")
         else:
-            # Capture and display errors
             error_log_messages.append(f"Error for {phone}: {result['message']}")
-            error_logs.write("\n".join(error_log_messages))  # Real-time update
+            error_logs.write("\n".join(error_log_messages))  # 实时更新日志
         
-    # Display results
-    st.write("### Results (结果):")
+    # 显示结果
+    st.write("### 结果:")
     for line in results:
         st.write(line)
 
-    # "Hacker" effect after checking
+    # 黑客特效
     st.markdown(
         """
         <div style="font-family: monospace; color: #00FF00;">
