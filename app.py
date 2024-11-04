@@ -14,13 +14,20 @@ def send_verification_code(phone, device):
             # 其他必要的headers信息
         }
         response = requests.post(url, headers=headers)
-        data = response.json()
+        
+        # 打印API返回的原始数据
+        st.write("API返回内容:", response.text)  # 添加这一行来查看返回的内容
+        
+        data = response.json()  # 尝试解析JSON
         if data.get("status") == "success":
             return {"message": "验证码已发送"}
         else:
             return {"message": "发送验证码失败", "error": data.get("error")}
+    except json.JSONDecodeError:
+        return {"message": "错误：无法解析API响应。返回内容不是JSON格式"}
     except Exception as e:
         return {"message": f"error: {str(e)}"}
+
 
 # 从接码API获取验证码
 def get_verification_code(api_link):
