@@ -92,6 +92,11 @@ def get_email_registration_status(email, session, device):
         }
 
         response = session.post(url, headers=headers, data=payload)
+        
+        print(response.text)  # 打印原始响应内容
+        if response.status_code != 200:
+            return {"message": "error", "details": f"HTTP Error {response.status_code}"}
+
         response_data = response.json()
 
         if response_data.get('status_code') == 200:  # 假设200表示成功
@@ -106,7 +111,7 @@ def get_email_registration_status(email, session, device):
         return {
             "message": f"error: {str(e)}"
         }
-
+        
 # 获取手机号的域名信息的函数
 def getdomain(phone, session, device):
     try:
