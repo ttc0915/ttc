@@ -67,7 +67,7 @@ def get_account_status(email, session, device):
         response = session.post(url, headers=headers, data=payload)
         response_data = response.json()
         
-        # Extract registration and ban status from response
+        # Check response fields for registration and ban status
         is_registered = response_data.get('data', {}).get('country_code') != 'sg'
         is_banned = response_data.get('data', {}).get('is_banned', False)
         
@@ -99,6 +99,10 @@ st.write("Please enter each phone number, one per line (请输入每个手机号
 # Input field
 phones = st.text_area("Phone Numbers (one per line)")
 
+# Error log box
+error_logs = st.empty()  # To display logs in real-time
+error_log_messages = []  # Store error messages
+
 # On button click, process phone numbers
 if st.button("Start Check"):
     session = requests.Session()
@@ -111,13 +115,16 @@ if st.button("Start Check"):
         
         result = get_account_status(phone, session, device)
         
+        # Check for success or error in response
         if result["message"] == "success":
             register_status = "True" if result["register"] else "False"
             ban_status = "True" if result["ban"] else "False"
             results.append(f"Phone number {phone}, register: {register_status}, Ban: {ban_status}")
         else:
-            results.append(f"Error for {phone}: {result['message']}")
-    
+            # Capture and display errors
+            error_log_messages.append(f"Error for {phone}: {result['message']}")
+            error_logs.write("\n".join(error_log_messages))  # Real-time update
+        
     # Display results
     st.write("### Results (结果):")
     for line in results:
