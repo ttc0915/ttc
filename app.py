@@ -189,17 +189,15 @@ if st.button("Start Check"):
     for line in results:
         st.write(line)
 
-# 黑客特效（示例）
-st.markdown(
-    """
-    <div style="font-family: monospace; color: #00FF00;">
-        <h2>Hacker Effect (黑客特效)</h2>
-        <p>Loading... (加载中...)</p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    # 黑客特效（在查询后弹出）
+    st.markdown(
+        """
+        <div style="font-family: monospace; color: #00FF00;">
+            <h2>Hacker Effect (黑客特效)</h2>
+            <p>Loading... (加载中...)</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    st.balloons()  # 加入一些动态效果
 
-# 动态效果
-if st.button("Surprise Me!"):
-    st.balloons()
