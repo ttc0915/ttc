@@ -64,8 +64,51 @@ def hashed_id(value):
     hashed_value = hashlib.sha256(hashed_id.encode()).hexdigest()
     return f"hashed_id={hashed_value}&type={type_value}"
 
-# 获取域名信息的函数
-def getdomain(email, session, device):
+# 获取邮箱注册状态的函数
+def get_email_registration_status(email, session, device):
+    try:
+        params = {
+            'device_id': device['payload']['device_id'],
+            'ac': 'wifi',
+            'channel': 'googleplay',
+            'aid': '567753',
+            'app_name': 'tiktok',
+            'version_code': '320906',
+            'device_platform': 'android',
+            'os': 'android',
+            'os_version': '9',
+            'openudid': device['payload']['openudid'],
+            'timezone_name': device['payload']['timezone_name'],
+            'timezone_offset': device['payload']['timezone_offset'],
+            'cdid': device['payload']['cdid'],
+        }
+        url_encoded_str = urllib.parse.urlencode(params)
+        url = f"https://api.tiktok.com/user/check_email/?{url_encoded_str}"
+
+        payload = hashed_id(email)
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'com.zhiliaoapp.musically',
+        }
+
+        response = session.post(url, headers=headers, data=payload)
+        response_data = response.json()
+
+        if response_data.get('status_code') == 200:  # 假设200表示成功
+            if response_data.get('is_registered'):
+                return {"message": "success", "is_registered": True}
+            else:
+                return {"message": "success", "is_registered": False}
+        else:
+            return {"message": "error", "details": response_data.get('message')}
+
+    except Exception as e:
+        return {
+            "message": f"error: {str(e)}"
+        }
+
+# 获取手机号的域名信息的函数
+def getdomain(phone, session, device):
     try:
         params = {
             'iid': device['payload']['iid'],
@@ -75,7 +118,6 @@ def getdomain(email, session, device):
             'aid': '567753',
             'app_name': 'tiktok_studio',
             'version_code': '320906',
-            'version_name': '32.9.6',
             'device_platform': 'android',
             'os': 'android',
             'ab_version': '32.9.6',
@@ -116,7 +158,7 @@ def getdomain(email, session, device):
         url_encoded_str = urllib.parse.urlencode(params, doseq=True).replace('%2A', '*')
         url = f"https://api16-normal-useast5.tiktokv.us/passport/app/region/?{url_encoded_str}"
 
-        payload = hashed_id(email)
+        payload = hashed_id(phone)
         headers = {
             'Accept-Encoding': 'gzip',
             'Connection': 'Keep-Alive',
@@ -138,31 +180,44 @@ def getdomain(email, session, device):
         }
 
 # Streamlit UI
-st.title("Phone Number Checker")
-st.write("请输入每个手机号， 每行一个")
+st.title("TikTok 注册检查工具")
+st.write("请输入每个手机号或邮箱，每行一个")
 
-# 输入框
-phones = st.text_area("Phone Numbers (one per line)")
+# 手机号输入框
+phones = st.text_area("手机号 (每行一个)")
 
-# 按钮点击事件
-if st.button("Start Check"):
+# 检查手机号按钮
+if st.button("检查手机号"):
     session = requests.Session()
-    results = []
+    phone_results = []
     for phone in phones.strip().split("\n"):
         phone = phone.strip()
         if not phone:
             continue
         result = getdomain(phone, session, device)
-        
+
         # 依据结果确定是否注册
         if result["message"] == "success" and result["data"].get('country_code') != 'sg':
-            results.append(f"Phone number {phone}, register: True")
+            phone_results.append(f"手机号 {phone}, 注册: 是")
         elif result["message"] == "success":
-            results.append(f"Phone number {phone}, register: False")
+            phone_results.append(f"手机号 {phone}, 注册: 否")
         else:
-            results.append(f"Error for {phone}: {result['message']}")
+            phone_results.append(f"手机号 {phone} 的错误: {result['message']}")
 
-    # 显示结果
-    st.write("### Results:")
-    for line in results:
+    # 显示手机号结果
+    st.write("### 手机号检查结果:")
+    for line in phone_results:
         st.write(line)
+
+# 邮箱输入框
+emails = st.text_area("邮箱地址 (每行一个)")
+
+# 检查邮箱按钮
+if st.button("检查邮箱"):
+    session = requests.Session()
+    email_results = []
+    for email in emails.strip().split("\n"):
+        email = email.strip()
+        if not email:
+            continue
+        result = get_email
