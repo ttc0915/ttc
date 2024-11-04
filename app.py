@@ -3,6 +3,11 @@ import requests
 import time
 import hashlib
 import urllib
+import logging
+
+# 设置日志配置
+logging.basicConfig(filename='error_log.txt', level=logging.ERROR,
+                    format='%(asctime)s:%(levelname)s:%(message)s')
 
 # 定义全局设备信息
 device = {
@@ -96,9 +101,11 @@ def get_email_registration_status(email, session, device):
         # 打印原始响应内容和状态码
         print(f"Response Code: {response.status_code}")
         print(f"Response Text: {response.text}")
-        
+
         if response.status_code != 200:
-            return {"message": "error", "details": f"HTTP Error {response.status_code}: {response.text}"}
+            error_message = f"HTTP Error {response.status_code}: {response.text}"
+            logging.error(error_message)
+            return {"message": "error", "details": error_message}
 
         response_data = response.json()
 
@@ -109,11 +116,16 @@ def get_email_registration_status(email, session, device):
                 else:
                     return {"message": "success", "is_registered": False}
             else:
-                return {"message": "error", "details": f"API Error {response_data['status_code']}: {response_data.get('message')}"}
+                error_message = f"API Error {response_data['status_code']}: {response_data.get('message')}"
+                logging.error(error_message)
+                return {"message": "error", "details": error_message}
         else:
-            return {"message": "error", "details": "Unexpected response structure."}
+            error_message = "Unexpected response structure."
+            logging.error(error_message)
+            return {"message": "error", "details": error_message}
 
     except Exception as e:
+        logging.error(f"Exception occurred: {str(e)}")
         return {
             "message": f"error: {str(e)}"
         }
@@ -191,6 +203,7 @@ def getdomain(phone, session, device):
             "message": "success"
         }
     except Exception as e:
+        logging.error(f"Exception occurred: {str(e)}")
         return {
             "message": f"error: {str(e)}"
         }
@@ -250,3 +263,4 @@ if st.button("检查邮箱"):
     st.write("### 邮箱检查结果:")
     for line in email_results:
         st.write(line)
+
