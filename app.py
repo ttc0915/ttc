@@ -99,8 +99,10 @@ def get_email_registration_status(email, session, device):
         response = session.post(url, headers=headers, data=payload)
 
         # 打印原始响应内容和状态码
-        print(f"Response Code: {response.status_code}")
-        print(f"Response Text: {response.text}")
+        logging.info(f"Request URL: {url}")
+        logging.info(f"Request Payload: {payload}")
+        logging.info(f"Response Code: {response.status_code}")
+        logging.info(f"Response Text: {response.text}")
 
         if response.status_code != 200:
             error_message = f"HTTP Error {response.status_code}: {response.text}"
@@ -194,8 +196,8 @@ def getdomain(phone, session, device):
         response = session.post(url, headers=headers, data=payload)
 
         # 打印原始响应内容和状态码
-        print(f"Response Code: {response.status_code}")
-        print(f"Response Text: {response.text}")
+        logging.info(f"Response Code: {response.status_code}")
+        logging.info(f"Response Text: {response.text}")
 
         response_data = response.json()
         return {
@@ -263,4 +265,3 @@ if st.button("检查邮箱"):
     st.write("### 邮箱检查结果:")
     for line in email_results:
         st.write(line)
-
