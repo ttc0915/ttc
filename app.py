@@ -104,13 +104,20 @@ def get_email_registration_status(email, session, device):
         logging.info(f"Response Code: {response.status_code}")
         logging.info(f"Response Text: {response.text}")
 
+        # 检查响应状态码
         if response.status_code != 200:
             error_message = f"HTTP Error {response.status_code}: {response.text}"
             logging.error(error_message)
             return {"message": "error", "details": error_message}
 
-        response_data = response.json()
+        try:
+            response_data = response.json()
+        except ValueError as e:
+            error_message = f"Error parsing JSON: {str(e)}"
+            logging.error(error_message)
+            return {"message": "error", "details": error_message}
 
+        # 检查返回数据的结构
         if 'status_code' in response_data:
             if response_data['status_code'] == 200:  # 假设200表示成功
                 if response_data.get('is_registered'):
