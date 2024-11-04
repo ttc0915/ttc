@@ -138,8 +138,30 @@ def getdomain(email, session, device):
         }
 
 # Streamlit UI
+st.set_page_config(page_title="Phone Number Checker", page_icon="📱")
+
+# 设置粉色主题
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #FFC0CB;
+        color: #000000;
+    }
+    .stTextInput, .stTextArea {
+        background-color: #FFB6C1;
+    }
+    .stButton {
+        background-color: #FF69B4;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("Phone Number Checker")
-st.write("请输入每个手机号， 每行一个")
+st.write("Please enter each phone number, one per line (请输入每个手机号，每行一个)")
 
 # 输入框
 phones = st.text_area("Phone Numbers (one per line)")
@@ -163,6 +185,21 @@ if st.button("Start Check"):
             results.append(f"Error for {phone}: {result['message']}")
 
     # 显示结果
-    st.write("### Results:")
+    st.write("### Results (结果):")
     for line in results:
         st.write(line)
+
+# 黑客特效（示例）
+st.markdown(
+    """
+    <div style="font-family: monospace; color: #00FF00;">
+        <h2>Hacker Effect (黑客特效)</h2>
+        <p>Loading... (加载中...)</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# 动态效果
+if st.button("Surprise Me!"):
+    st.balloons()
